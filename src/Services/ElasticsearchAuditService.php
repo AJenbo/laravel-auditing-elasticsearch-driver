@@ -32,6 +32,7 @@ class ElasticsearchAuditService implements AuditDriver
         $this->index          = $index;
         $this->auditType      = $auditType;
         $this->implementation = $implementation;
+        $this->client->setClient();
     }
 
     public function audit(Auditable $model): Audit
@@ -77,7 +78,6 @@ class ElasticsearchAuditService implements AuditDriver
     ): Elasticsearch {
         $from ??= $model->getAuditThreshold() - 1;
 
-        assert(property_exists($model, 'id'));
         assert(method_exists($model, 'getMorphClass'));
         $params = [
             'index' => $this->index,
@@ -90,6 +90,7 @@ class ElasticsearchAuditService implements AuditDriver
                         'must' => [
                             [
                                 'term' => [
+                                    /** @phpstan-ignore-next-line */
                                     'auditable_id' => $model->id,
                                 ]
                             ],
@@ -139,7 +140,7 @@ class ElasticsearchAuditService implements AuditDriver
         return $this->index;
     }
 
-    public function setClient(?Client $client = null, bool $isAsync = false): ElasticsearchAuditService
+    public function setClient(?Client $client = null): ElasticsearchAuditService
     {
         $this->client->setClient(
             client: $client,
